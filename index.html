@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF with Brønnøysundregisteret Data</title>
+</head>
+<body>
+  <h1>Fill the Form</h1>
+  
+  <label for="orgNumber">Organization Number:</label>
+  <input type="text" id="orgNumber" name="orgNumber" required>
+  <button id="fetchData">Fetch Company Data</button>
+
+  <div id="companyData" style="display:none;">
+    <h2>Company Information</h2>
+    <p id="companyName"></p>
+    <p id="companyAddress"></p>
+    <button id="useData">Use Data</button>
+    <button id="manualFill">Manually Fill Form</button>
+  </div>
+
+  <div id="pdfPreviewSection" style="display:none;">
+    <h2>PDF Preview</h2>
+    <iframe id="pdfPreview" width="100%" height="500px"></iframe>
+  </div>
+
+  <button id="signDocument" style="display:none;">Sign Document</button>
+
+  <script>
+    document.getElementById('fetchData').addEventListener('click', async () => {
+      const orgNumber = document.getElementById('orgNumber').value;
+      
+      // Fetch data from Brønnøysundregisteret API
+      const response = await fetch(`/netlify/functions/fetch-company?org=${orgNumber}`);
+      const companyData = await response.json();
+
+      // Display the fetched company data
+      document.getElementById('companyName').textContent = `Name: ${companyData.name}`;
+      document.getElementById('companyAddress').textContent = `Address: ${companyData.address}`;
+      document.getElementById('companyData').style.display = 'block';
+    });
+
+    document.getElementById('useData').addEventListener('click', async () => {
+      const orgNumber = document.getElementById('orgNumber').value;
+
+      // Use the fetched data to fill the PDF
+      const response = await fetch(`/.netlify/functions/generate-pdf?org=${orgNumber}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      document.getElementById('pdfPreview').src = url;
+      document.getElementById('pdfPreviewSection').style.display = 'block';
+      document.getElementById('signDocument').style.display = 'block';
+    });
+
+    document.getElementById('signDocument').addEventListener('click', async () => {
+      // Call Dokobit API for signing the PDF with BankID
+      const response = await fetch(`/.netlify/functions/sign-pdf`);
+      const data = await response.json();
+      window.open(data.signUrl); // Redirect to the signing page
+    });
+  </script>
+</body>
+</html>

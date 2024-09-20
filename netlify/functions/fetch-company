@@ -1,0 +1,29 @@
+const fetch = require('node-fetch');
+
+exports.handler = async (event) => {
+  const { org } = event.queryStringParameters;
+  const url = `https://data.brreg.no/enhetsregisteret/api/enheter/${org}`;
+
+  try {
+    const response = await fetch(url);
+    const companyData = await response.json();
+
+    console.log(companyData)    
+
+    // Extract relevant information
+    const company = {
+      name: companyData.navn,
+      address: `${companyData.forretningsadresse.adresse}, ${companyData.forretningsadresse.postnummer} ${companyData.forretningsadresse.poststed}`,
+    };
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify(company),
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Error fetching company data', error }),
+    };
+  }
+};
